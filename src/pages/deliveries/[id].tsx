@@ -22,36 +22,6 @@ function InputField({ label, value, editable }: InputFieldProps) {
   );
 }
 
-interface StatusFieldProps {
-  step: number;
-  onPrev: () => void;
-  onNext: () => void;
-}
-
-function StatusField({ step, onPrev, onNext }: StatusFieldProps) {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1">Delivery Status</label>
-        <input
-          type="text"
-          className="input input-bordered w-64"
-          value={statusSteps[step]}
-          disabled
-        />
-      </div>
-      <div className="space-x-2">
-        <button onClick={onPrev} className="btn btn-outline" disabled={step === 0}>
-          ◀ Previous Step
-        </button>
-        <button onClick={onNext} className="btn btn-outline" disabled={step === statusSteps.length - 1}>
-          Next Step ▶
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function DeliveryForm() {
   const router = useRouter();
   const { id } = router.query;
