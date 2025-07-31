@@ -38,9 +38,19 @@ interface StatusFieldProps {
   step: number;
   onPrev: () => void;
   onNext: () => void;
+  message: string;
+  onMessageChange: (newMsg: string) => void;
+  editable: boolean;
 }
 
-function StatusField({ step, onPrev, onNext }: StatusFieldProps) {
+function StatusField({
+  step,
+  onPrev,
+  onNext,
+  message,
+  onMessageChange,
+  editable,
+}: StatusFieldProps) {
   return (
     <div className="flex items-center justify-between mb-6 bg-white p-4 rounded shadow">
       <div className="flex flex-col">
@@ -52,6 +62,12 @@ function StatusField({ step, onPrev, onNext }: StatusFieldProps) {
           className="input input-bordered w-64"
           value={status[step]}
           disabled
+        />
+        <textarea
+          className={`textarea textarea-bordered w-64 mt-2 ${message === '' ? 'hidden' : ''}`}
+          value={message}
+          onChange={e => onMessageChange(e.target.value)}
+          disabled={!editable}
         />
       </div>
       <div className="space-x-2">
@@ -65,7 +81,7 @@ function StatusField({ step, onPrev, onNext }: StatusFieldProps) {
         <button
           onClick={onNext}
           className="btn btn-primary mt-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled={step === status.length - 1}
+          disabled={step === status.length - 1 || editable}
         >
           Enviar ▶
         </button>
@@ -93,13 +109,15 @@ export default function DeliveryForm() {
     generator: string;
     projectId: string;
     status: number;
+    messages: string[];
     items: DeliveryItem[];
   }
 
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
   const [items, setItems] = useState<DeliveryItem[]>([]);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(deliveryData?.status || 0);
   const [editable, setEditable] = useState(true);
+  const [message, setMessage] = useState(deliveryData?.messages?.[step] || '')
 
   useEffect(() => {
     if (!id) return;
@@ -118,24 +136,27 @@ export default function DeliveryForm() {
       generator: string;
       projectId: string;
       status: number;
+      messages: string[];
       items: DeliveryItem[];
     }
 
     const delivery: DeliveryData | undefined = isNew
       ? {
-      id: String(storedDeliveries.length + 1),
-      date: new Date().toLocaleDateString('pt-BR'),
-      salesOrder: '',
-      generator: '',
-      projectId: '',
-      status: 0,
-      items: [],
+        id: String(storedDeliveries.length + 1),
+        date: new Date().toLocaleDateString('pt-BR'),
+        salesOrder: '',
+        generator: '',
+        projectId: '',
+        status: 0,
+        messages: [],
+        items: [],
       }
       : (storedDeliveries.find((d: DeliveryData) => d.id === id) as DeliveryData | undefined);
 
     setDeliveryData(delivery || null);
     setItems(delivery?.items || []);
     setStep(delivery?.status ?? 0);
+    setMessage(delivery?.messages?.[step] || '')
     setEditable(delivery?.status === 0);
     setIsHydrated(true);
   }, [id, isNew]);
@@ -147,32 +168,46 @@ export default function DeliveryForm() {
   }
 
   const handleSave = () => {
-    const updatedDelivery = { ...deliveryData, items, status: step };
-    const storedDeliveries = getStorageDeliveries() || deliveries;
-    
-    let newDeliveries;
-    if (isNew) {
-      newDeliveries = [...storedDeliveries, updatedDelivery];
+    if (editable) {
+      const updatedDelivery = { ...deliveryData, items, status: step };
+      const storedDeliveries = getStorageDeliveries() || deliveries;
+
+      let newDeliveries;
+      if (isNew) {
+        newDeliveries = [...storedDeliveries, updatedDelivery];
+      } else {
+        newDeliveries = storedDeliveries.map((d: DeliveryData) =>
+          d.id === id ? updatedDelivery : d
+        );
+      }
+
+      updateDeliveries(newDeliveries);
+      setEditable(false);
+      if (isNew) {
+        router.push('/deliveries');
+      }
     } else {
-      newDeliveries = storedDeliveries.map((d: DeliveryData) => 
-        d.id === id ? updatedDelivery : d
-      );
-    }
-    
-    updateDeliveries(newDeliveries);
-    setEditable(false);
-    if (isNew) {
-      router.push('/deliveries');
+      setEditable(true);
     }
   };
 
-  const handlePrev = () =>
+  const handlePrev = () => {
+    const userMsg = window.prompt('Por favor, explique o motivo da devolução:', message);
+
+    if (userMsg !== '') {
+      setMessage(userMsg ?? '');
+    }
+
     setStep((prev = 0) =>
       Math.max((prev ?? 0) - 1, 0));
-  const handleNext = () =>
+  }
+
+  const handleNext = () => {
+    setMessage(deliveryData?.messages?.[step + 1] || '');
     setStep((prev = 0) =>
       Math.min((prev ?? 0) + 1, status.length - 1)
     );
+  }
 
   if (!deliveryData) return <p className="text-red-500 font-bold">Resgitro não encontrado</p>;
 
@@ -208,6 +243,9 @@ export default function DeliveryForm() {
         step={step}
         onPrev={handlePrev}
         onNext={handleNext}
+        message={message}
+        onMessageChange={setMessage}
+        editable={editable}
       />
 
       <div className="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded shadow">
