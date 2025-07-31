@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
-import { useState } from 'react';
-import deliveries from '@/data/deliveries';
+import { useState, useEffect } from 'react';
+import deliveries, { updateDeliveries } from '@/data/deliveries';
+import { getStorageDeliveries } from '@/utils/storage';
 
 const status = [
   'Em Preenchimento',         // step 0
@@ -76,25 +77,95 @@ function StatusField({ step, onPrev, onNext }: StatusFieldProps) {
 export default function DeliveryForm() {
   const router = useRouter();
   const { id } = router.query;
-
+  const [isHydrated, setIsHydrated] = useState(false);
   const isNew = id === 'new';
 
-  const [delivery, setDelivery] = useState(() =>
-    isNew
+  interface DeliveryItem {
+    id: string;
+    description: string;
+    quantity: string;
+  }
+
+  interface DeliveryData {
+    id: string;
+    date: string;
+    salesOrder: string;
+    generator: string;
+    projectId: string;
+    status: number;
+    items: DeliveryItem[];
+  }
+
+  const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
+  const [items, setItems] = useState<DeliveryItem[]>([]);
+  const [step, setStep] = useState(0);
+  const [editable, setEditable] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const storedDeliveries = getStorageDeliveries() || deliveries;
+    interface DeliveryItem {
+      id: string;
+      description: string;
+      quantity: string;
+    }
+
+    interface DeliveryData {
+      id: string;
+      date: string;
+      salesOrder: string;
+      generator: string;
+      projectId: string;
+      status: number;
+      items: DeliveryItem[];
+    }
+
+    const delivery: DeliveryData | undefined = isNew
       ? {
-        id: '',
-        date: '',
-        salesOrder: '',
-        generator: '',
-        projectId: '',
-        status: 0,
-        items: [],
+      id: String(storedDeliveries.length + 1),
+      date: new Date().toLocaleDateString('pt-BR'),
+      salesOrder: '',
+      generator: '',
+      projectId: '',
+      status: 0,
+      items: [],
       }
-      : deliveries.find((d) => d.id === id)
-  );
-  const [items, setItems] = useState(delivery?.items || []);
-  const [step, setStep] = useState(delivery?.status ?? 0);
-  const [editable, setEditable] = useState(step === 0);
+      : (storedDeliveries.find((d: DeliveryData) => d.id === id) as DeliveryData | undefined);
+
+    setDeliveryData(delivery || null);
+    setItems(delivery?.items || []);
+    setStep(delivery?.status ?? 0);
+    setEditable(delivery?.status === 0);
+    setIsHydrated(true);
+  }, [id, isNew]);
+
+  if (!isHydrated) {
+    return <div className="h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>;
+  }
+
+  const handleSave = () => {
+    const updatedDelivery = { ...deliveryData, items, status: step };
+    const storedDeliveries = getStorageDeliveries() || deliveries;
+    
+    let newDeliveries;
+    if (isNew) {
+      newDeliveries = [...storedDeliveries, updatedDelivery];
+    } else {
+      newDeliveries = storedDeliveries.map((d: DeliveryData) => 
+        d.id === id ? updatedDelivery : d
+      );
+    }
+    
+    updateDeliveries(newDeliveries);
+    setEditable(false);
+    if (isNew) {
+      router.push('/deliveries');
+    }
+  };
+
   const handlePrev = () =>
     setStep((prev = 0) =>
       Math.max((prev ?? 0) - 1, 0));
@@ -103,7 +174,7 @@ export default function DeliveryForm() {
       Math.min((prev ?? 0) + 1, status.length - 1)
     );
 
-  if (!delivery) return <p className="text-red-500 font-bold">Resgitro não encontrado</p>;
+  if (!deliveryData) return <p className="text-red-500 font-bold">Resgitro não encontrado</p>;
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTableElement>) => {
     if (!editable) return;
@@ -142,27 +213,27 @@ export default function DeliveryForm() {
       <div className="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded shadow">
         <InputField
           label="Data de Separação"
-          value={delivery.date}
+          value={deliveryData.date}
           editable={editable}
-          onChange={(val) => setDelivery({ ...delivery, date: val })}
+          onChange={(val) => setDeliveryData({ ...deliveryData, date: val })}
         />
         <InputField
           label="ZVGP"
-          value={delivery.salesOrder}
+          value={deliveryData.salesOrder}
           editable={editable}
-          onChange={(val) => setDelivery({ ...delivery, salesOrder: val })}
+          onChange={(val) => setDeliveryData({ ...deliveryData, salesOrder: val })}
         />
         <InputField
           label="Gerador"
-          value={delivery.generator}
+          value={deliveryData.generator}
           editable={editable}
-          onChange={(val) => setDelivery({ ...delivery, generator: val })}
+          onChange={(val) => setDeliveryData({ ...deliveryData, generator: val })}
         />
         <InputField
           label="PEP"
-          value={delivery.projectId}
+          value={deliveryData.projectId}
           editable={editable}
-          onChange={(val) => setDelivery({ ...delivery, projectId: val })}
+          onChange={(val) => setDeliveryData({ ...deliveryData, projectId: val })}
         />
       </div>
 
@@ -254,7 +325,7 @@ export default function DeliveryForm() {
       </table>
 
       <button
-        onClick={() => setEditable((e) => !e)}
+        onClick={handleSave}
         disabled={step !== 0}
         className="mt-6 px-6 py-2 rounded text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
       >

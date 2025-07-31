@@ -1,4 +1,6 @@
-const deliveries = [
+import { getStorageDeliveries, setStorageDeliveries } from '@/utils/storage';
+
+const initialDeliveries = [
   {"id": "1", "date": "21/07/2025", "salesOrder": "51867825", "generator": "18026225", "projectId": "136-2500000-859", "status": 0, "items": [{"id": "1295310485", "description": "Component A", "quantity": "2"}, {"id": "1239670711", "description": "Component B", "quantity": "2"}]},
   {"id": "2", "date": "24/07/2025", "salesOrder": "51719583", "generator": "18709570", "projectId": "136-2500000-858", "status": 1, "items": [{"id": "1957970516", "description": "Component A", "quantity": "5"}, {"id": "1093349856", "description": "Component B", "quantity": "5"}]},
   {"id": "3", "date": "14/07/2025", "salesOrder": "50533224", "generator": "18031244", "projectId": "136-2500000-195", "status": 2, "items": [{"id": "1234760738", "description": "Component A", "quantity": "2"}, {"id": "1542621108", "description": "Component B", "quantity": "5"}]},
@@ -25,5 +27,17 @@ const deliveries = [
   {"id": "24", "date": "17/07/2025", "salesOrder": "51785277", "generator": "18912804", "projectId": "136-2500000-740", "status": 5, "items": [{"id": "1320452650", "description": "Component A", "quantity": "5"}, {"id": "1653876785", "description": "Component B", "quantity": "2"}]},
   {"id": "25", "date": "05/07/2025", "salesOrder": "56273233", "generator": "18799550", "projectId": "136-2500000-265", "status": 0, "items": [{"id": "1579153816", "description": "Component A", "quantity": "5"}, {"id": "1986224887", "description": "Component B", "quantity": "1"}]},
 ];
+
+const deliveries = getStorageDeliveries() || initialDeliveries;
+
+// Initialize localStorage if empty
+if (!getStorageDeliveries()) {
+  setStorageDeliveries(initialDeliveries);
+}
+
+export const updateDeliveries = (newDeliveries: any[]) => {
+  setStorageDeliveries(newDeliveries);
+  return newDeliveries;
+};
 
 export default deliveries;

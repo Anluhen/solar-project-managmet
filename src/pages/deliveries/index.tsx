@@ -1,22 +1,46 @@
 import { useRouter } from 'next/router';
-import { useState, useMemo } from 'react';
-import deliveries from '@/data/deliveries';
+import { useState, useMemo, useEffect } from 'react';
+import deliveries, { updateDeliveries } from '@/data/deliveries';
+import { getStorageDeliveries } from '@/utils/storage';
+
+type Delivery = {
+    id: number;
+    date: string;
+    salesOrder: string;
+    generator: string;
+    projectId: string;
+    status: number;
+};
 
 export default function DeliveriesPage() {
     const router = useRouter();
+    const [isHydrated, setIsHydrated] = useState(false);
+    const [deliveryData, setDeliveryData] = useState<Delivery[]>([]);
     const [searchId, setSearchId] = useState('');
     const [searchZvgp, setSearchZvgp] = useState('');
     const [searchGerador, setSearchGerador] = useState('');
     const [searchPep, setSearchPep] = useState('');
 
+    useEffect(() => {
+        const storedDeliveries = getStorageDeliveries() || deliveries;
+        setDeliveryData(storedDeliveries);
+        setIsHydrated(true);
+    }, []);
+
     const filteredDeliveries = useMemo(() =>
-        deliveries.filter(d =>
+        deliveryData.filter(d =>
             d.id.toString().includes(searchId) &&
             d.salesOrder.toLowerCase().includes(searchZvgp.toLowerCase()) &&
             d.generator.toLowerCase().includes(searchGerador.toLowerCase()) &&
             d.projectId.toLowerCase().includes(searchPep.toLowerCase())
         ),
-        [searchId, searchZvgp, searchGerador, searchPep]);
+        [deliveryData, searchId, searchZvgp, searchGerador, searchPep]);
+
+    if (!isHydrated) {
+        return <div className="h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>;
+    }
 
     return (
         <div className="h-screen overflow-y-auto m-auto relative overflow-x-auto shadow-md rounded-lg">
