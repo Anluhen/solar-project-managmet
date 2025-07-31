@@ -77,7 +77,7 @@ export default function DeliveryForm() {
   const delivery = deliveries.find((d) => d.id === id);
   const [editable, setEditable] = useState(true);
   const [items, setItems] = useState(delivery?.items || []);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(delivery?.status);
   const handlePrev = () =>
     setStep((prev) => Math.max(prev - 1, 0));
   const handleNext = () =>
@@ -95,7 +95,7 @@ export default function DeliveryForm() {
         ← Retornar
       </button>
 
-      <h1 className="text-2xl font-semibold mb-6 text-gray-800">Detalhes da Solicitação</h1>
+      <h1 className="text-2xl font-semibold mb-6 text-gray-800">Detalhes da Solicitação - {id}</h1>
 
       <StatusField
         step={step}
