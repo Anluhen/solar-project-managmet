@@ -22,6 +22,15 @@ export default function DeliveriesPage() {
         <div className="h-screen overflow-y-auto m-auto relative overflow-x-auto shadow-md rounded-lg">
             <h1 className="p-8 pb-0 text-2xl font-bold">Solicitações</h1>
             <div className="p-8 pt-0">
+                {/* Adicionar solicitação */}
+                <button
+                    onClick={() => router.push('/deliveries/new')}
+                    className="btn btn-primary mt-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                    + Nova Solicitação
+                </button>
+
+                {/* Filtros */}
                 <div className="border border-gray-200 rounded-md m-auto inline-flex w-full">
                     <div className="pb-4 bg-white w-1/5">
                         <label className="sr-only">Buscar ID</label>
@@ -95,6 +104,8 @@ export default function DeliveriesPage() {
                     </div>
 
                 </div>
+
+                {/* Tabela */}
                 <table className="w-full text-sm table-auto border shadow-md border-gray-200">
                     <thead className="sticky top-0 text-xs uppercase bg-gray-200 z-10">
                         <tr>

@@ -15,9 +15,10 @@ interface InputFieldProps {
   label: string;
   value: string;
   editable: boolean;
+  onChange?: (value: string) => void;
 }
 
-function InputField({ label, value, editable }: InputFieldProps) {
+function InputField({ label, value, editable, onChange }: InputFieldProps) {
   return (
     <div className="flex flex-col">
       <label className="text-sm font-medium mb-1 text-gray-700">{label}</label>
@@ -26,6 +27,7 @@ function InputField({ label, value, editable }: InputFieldProps) {
         className="border border-gray-200 rounded b"
         value={value}
         disabled={!editable}
+        onChange={(e) => editable && onChange?.(e.target.value)}
       />
     </div>
   );
@@ -75,10 +77,24 @@ export default function DeliveryForm() {
   const router = useRouter();
   const { id } = router.query;
 
-  const delivery = deliveries.find((d) => d.id === id);
-  const [editable, setEditable] = useState(true);
+  const isNew = id === 'new';
+
+  const [delivery, setDelivery] = useState(() =>
+    isNew
+      ? {
+        id: '',
+        date: '',
+        salesOrder: '',
+        generator: '',
+        projectId: '',
+        status: 0,
+        items: [],
+      }
+      : deliveries.find((d) => d.id === id)
+  );
   const [items, setItems] = useState(delivery?.items || []);
   const [step, setStep] = useState(delivery?.status ?? 0);
+  const [editable, setEditable] = useState(step === 0);
   const handlePrev = () =>
     setStep((prev = 0) =>
       Math.max((prev ?? 0) - 1, 0));
@@ -124,10 +140,30 @@ export default function DeliveryForm() {
       />
 
       <div className="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded shadow">
-        <InputField label="Data de Separação" value={delivery.date} editable={editable} />
-        <InputField label="ZVGP" value={delivery.salesOrder} editable={editable} />
-        <InputField label="Gerador" value={delivery.generator} editable={editable} />
-        <InputField label="PEP" value={delivery.projectId} editable={editable} />
+        <InputField
+          label="Data de Separação"
+          value={delivery.date}
+          editable={editable}
+          onChange={(val) => setDelivery({ ...delivery, date: val })}
+        />
+        <InputField
+          label="ZVGP"
+          value={delivery.salesOrder}
+          editable={editable}
+          onChange={(val) => setDelivery({ ...delivery, salesOrder: val })}
+        />
+        <InputField
+          label="Gerador"
+          value={delivery.generator}
+          editable={editable}
+          onChange={(val) => setDelivery({ ...delivery, generator: val })}
+        />
+        <InputField
+          label="PEP"
+          value={delivery.projectId}
+          editable={editable}
+          onChange={(val) => setDelivery({ ...delivery, projectId: val })}
+        />
       </div>
 
       <h2 className="text-xl font-bold mt-6 mb-4">Itens</h2>
