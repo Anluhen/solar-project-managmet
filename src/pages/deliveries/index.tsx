@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useState, useMemo, useEffect } from 'react';
 import deliveries, { updateDeliveries } from '@/data/deliveries';
 import { getStorageDeliveries } from '@/utils/storage';
+import DeliveryRow from '@/components/DeliveryRow';
 
 type Delivery = {
     id: number;
@@ -142,17 +143,11 @@ export default function DeliveriesPage() {
                     </thead>
                     <tbody>
                         {filteredDeliveries.map((delivery) => (
-                            <tr
-                                key={delivery.id}
-                                onClick={() => router.push(`/deliveries/${delivery.id}`)}
-                                className="cursor-pointer border-b border-gray-200 bg-white hover:bg-gray-100"
-                            >
-                                <td className="text-center px-4 py-2">{delivery.id}</td>
-                                <td className="text-center px-4 py-2">{delivery.date}</td>
-                                <td className="text-center px-4 py-2">{delivery.salesOrder}</td>
-                                <td className="text-center px-4 py-2">{delivery.generator}</td>
-                                <td className="text-center px-4 py-2">{delivery.projectId}</td>
-                            </tr>
+                            <DeliveryRow 
+                              key={delivery.id}
+                              delivery={delivery}
+                              onRowClick={() => router.push(`/deliveries/${delivery.id}`)}
+                            />
                         ))}
                     </tbody>
                 </table>
