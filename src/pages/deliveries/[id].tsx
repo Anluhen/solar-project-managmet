@@ -3,6 +3,11 @@ import { useState, useEffect } from 'react';
 import deliveries, { updateDeliveries } from '@/data/deliveries';
 import { getStorageDeliveries } from '@/utils/storage';
 
+import InfoForm from '@/components/InfoForm';
+import StatusField from '@/components/StatusField';
+import FreteForm from '@/components/FreteForm';
+import ItemsTable from '@/components/ItemsTable';
+
 const status = [
   'Em Preenchimento',         // step 0
   'Em Preparação',   // step 1
@@ -11,84 +16,6 @@ const status = [
   'Em Trânsito',       // step 4
   'Entregue'      // step 5
 ];
-
-interface InputFieldProps {
-  label: string;
-  value: string;
-  editable: boolean;
-  onChange?: (value: string) => void;
-}
-
-function InputField({ label, value, editable, onChange }: InputFieldProps) {
-  return (
-    <div className="flex flex-col">
-      <label className="text-sm font-medium mb-1 text-gray-700">{label}</label>
-      <input
-        type="text"
-        className="border border-gray-200 rounded b"
-        value={value}
-        disabled={!editable}
-        onChange={(e) => editable && onChange?.(e.target.value)}
-      />
-    </div>
-  );
-}
-
-interface StatusFieldProps {
-  step: number;
-  onPrev: () => void;
-  onNext: () => void;
-  message: string;
-  onMessageChange: (newMsg: string) => void;
-  editable: boolean;
-}
-
-function StatusField({
-  step,
-  onPrev,
-  onNext,
-  message,
-  onMessageChange,
-  editable,
-}: StatusFieldProps) {
-  return (
-    <div className="flex items-center justify-between mb-6 bg-white p-4 rounded shadow">
-      <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1 text-gray-700">
-          Status
-        </label>
-        <input
-          type="text"
-          className="input input-bordered w-64"
-          value={status[step]}
-          disabled
-        />
-        <textarea
-          className={`textarea textarea-bordered w-64 mt-2 ${message === '' ? 'hidden' : ''}`}
-          value={message}
-          onChange={e => onMessageChange(e.target.value)}
-          disabled={!editable}
-        />
-      </div>
-      <div className="space-x-2">
-        <button
-          onClick={onPrev}
-          className="btn btn-primary mt-6 px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled={step === 0}
-        >
-          ◀ Devolver
-        </button>
-        <button
-          onClick={onNext}
-          className="btn btn-primary mt-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled={step === status.length - 1 || editable}
-        >
-          Enviar ▶
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function DeliveryForm() {
   const router = useRouter();
@@ -116,7 +43,7 @@ export default function DeliveryForm() {
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
   const [items, setItems] = useState<DeliveryItem[]>([]);
   const [step, setStep] = useState(deliveryData?.status || 0);
-  const [editable, setEditable] = useState(true);
+  const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState(deliveryData?.messages?.[step] || '')
 
   useEffect(() => {
@@ -157,7 +84,7 @@ export default function DeliveryForm() {
     setItems(delivery?.items || []);
     setStep(delivery?.status ?? 0);
     setMessage(delivery?.messages?.[step] || '')
-    setEditable(delivery?.status === 0);
+    setEditable(isNew);
     setIsHydrated(true);
   }, [id, isNew]);
 
@@ -231,144 +158,52 @@ export default function DeliveryForm() {
 
   return (
     <div className="p-6 pl-20 pr-20 bg-gray-100 min-h-screen">
-      <button
-        onClick={() => router.push('/deliveries')}
-        className="btn btn-primary mb-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-        ← Retornar
-      </button>
+      <div className="inline-flex justify-between w-full">
+        <button
+          onClick={() => router.push('/deliveries')}
+          className="btn btn-primary mb-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          ← Retornar
+        </button>
 
+        <button
+          onClick={handleSave}
+          disabled={step !== 0}
+          className="btn btn-primary mb-6 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          {editable ? 'Salvar' : 'Editar'}
+        </button>
+      </div>
       <h1 className="text-2xl font-semibold mb-6 text-gray-800">Detalhes da Solicitação - {id}</h1>
 
       <StatusField
         step={step}
+        status={status}
         onPrev={handlePrev}
         onNext={handleNext}
         message={message}
-        onMessageChange={setMessage}
+        setMessage={setMessage}
         editable={editable}
       />
 
-      <div className="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded shadow">
-        <InputField
-          label="Data de Separação"
-          value={deliveryData.date}
-          editable={editable}
-          onChange={(val) => setDeliveryData({ ...deliveryData, date: val })}
-        />
-        <InputField
-          label="ZVGP"
-          value={deliveryData.salesOrder}
-          editable={editable}
-          onChange={(val) => setDeliveryData({ ...deliveryData, salesOrder: val })}
-        />
-        <InputField
-          label="Gerador"
-          value={deliveryData.generator}
-          editable={editable}
-          onChange={(val) => setDeliveryData({ ...deliveryData, generator: val })}
-        />
-        <InputField
-          label="PEP"
-          value={deliveryData.projectId}
-          editable={editable}
-          onChange={(val) => setDeliveryData({ ...deliveryData, projectId: val })}
-        />
-      </div>
+      <InfoForm
+        deliveryData={deliveryData}
+        setDeliveryData={setDeliveryData}
+        editable={editable}
+      />
 
       <h2 className="text-xl font-bold mt-6 mb-4">Itens</h2>
 
-      <table
-        className="table-auto max-w-400px bg-white rounded shadow"
-        onPaste={handlePaste}
-      >
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="px-4 py-2 text-left">Item SAP</th>
-            <th className="px-4 py-2 text-left">Descrição</th>
-            <th className="px-4 py-2 text-center">Quantidade</th>
-            <th className="px-4 py-2 text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, index) => (
-            <tr key={index} className="border-b border-gray-200">
-              <td className="px-4 py-2">
-                <input
-                  type="text"
-                  className="input input-sm input-bordered w-full"
-                  value={item.id}
-                  disabled={!editable}
-                  onChange={(e) => {
-                    const newItems = [...items];
-                    newItems[index].id = e.target.value;
-                    setItems(newItems);
-                  }}
-                />
-              </td>
-              <td className="px-4 py-2">
-                <input
-                  type="text"
-                  className="input input-sm input-bordered w-full"
-                  value={item.description}
-                  disabled={!editable}
-                  onChange={(e) => {
-                    const newItems = [...items];
-                    newItems[index].description = e.target.value;
-                    setItems(newItems);
-                  }}
-                />
-              </td>
-              <td className="px-4 py-2 text-center">
-                <input
-                  type="number"
-                  className="input input-sm input-bordered text-center"
-                  value={item.quantity}
-                  disabled={!editable}
-                  onChange={(e) => {
-                    const newItems = [...items];
-                    newItems[index].quantity = e.target.value;
-                    setItems(newItems);
-                  }}
-                />
-              </td>
-              <td className="px-4 py-2 text-center">
-                <button
-                  disabled={!editable}
-                  onClick={() => {
-                    const newItems = items.filter((_, i) => i !== index);
-                    setItems(newItems);
-                  }}
-                  className="btn btn-sm btn-error"
-                >
-                  ✕
-                </button>
-              </td>
-            </tr>
-          ))}
-          {editable && (
-            <tr>
-              <td colSpan={4} className="px-4 py-2 text-center">
-                <button
-                  onClick={() =>
-                    setItems([...items, { id: '', description: '', quantity: '' }])
-                  }
-                  className="btn btn-sm btn-success"
-                >
-                  + Adicionar Item
-                </button>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ItemsTable
+        items={items}
+        setItems={setItems}
+        editable={editable}
+        handlePaste={handlePaste}
+      />
 
-      <button
-        onClick={handleSave}
-        disabled={step !== 0}
-        className="mt-6 px-6 py-2 rounded text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-      >
-        {editable ? 'Salvar' : 'Editar'}
-      </button>
+      <FreteForm
+        editable={editable}
+        hidden={step !== 2}
+      />
 
     </div>
   );
