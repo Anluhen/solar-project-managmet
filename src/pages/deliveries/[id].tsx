@@ -167,7 +167,7 @@ export default function DeliveryForm() {
 
         <button
           onClick={handleSave}
-          disabled={step !== 0}
+          // disabled={step !== 0}
           className="btn btn-primary mb-6 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           {editable ? 'Salvar' : 'Editar'}
@@ -188,7 +188,7 @@ export default function DeliveryForm() {
       <InfoForm
         deliveryData={deliveryData}
         setDeliveryData={setDeliveryData}
-        editable={editable}
+        editable={editable && step === 0}
       />
 
       <h2 className="text-xl font-bold mt-6 mb-4">Itens</h2>
@@ -196,12 +196,12 @@ export default function DeliveryForm() {
       <ItemsTable
         items={items}
         setItems={setItems}
-        editable={editable}
+        editable={editable && step === 0}
         handlePaste={handlePaste}
       />
 
       <FreteForm
-        editable={editable}
+        editable={editable && step === 2}
         hidden={step !== 2}
       />
 
