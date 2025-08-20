@@ -1,5 +1,7 @@
 # solar-project-managmet
-A tool to help a multinational company manage their multimilion dollars projects
+A tool to help a multinational company manage their multimillion dollars projects.
+This project was just a proff of concept and got discontinued.
+The project was substituted by: https://github.com/Anluhen/solar-we-app
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
